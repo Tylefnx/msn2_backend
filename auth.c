@@ -1,38 +1,52 @@
-#include "./libs/auth.h"
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
+#include <stdbool.h>
 
-typedef struct {
-    char username[50];
-    char password[50];
-} User;
+#define USERS_FILE "users.txt"
 
-#define MAX_USERS 100
-User users[MAX_USERS];
-int user_count = 0;
-
+// Kullanıcıyı dosyaya kaydeder
 bool register_user(const char *username, const char *password) {
-    if (user_count >= MAX_USERS) {
-        printf("Maksimum kullanıcı limitine ulaşıldı.\n");
+    FILE *file = fopen(USERS_FILE, "a");
+    if (!file) {
+        perror("Kullanıcı dosyası açılamadı");
         return false;
     }
 
-    strcpy(users[user_count].username, username);
-    strcpy(users[user_count].password, password);
-    user_count++;
-    printf("Kullanıcı başarıyla kaydedildi.\n");
+    // Kullanıcıya benzersiz bir ID atayın (örnek: mevcut kullanıcı sayısına göre)
+    int user_id = 1; // Varsayılan ID
+    char line[256];
+    FILE *read_file = fopen(USERS_FILE, "r");
+    while (fgets(line, sizeof(line), read_file)) {
+        user_id++;
+    }
+    fclose(read_file);
+
+    fprintf(file, "%d:%s:%s\n", user_id, username, password);
+    fclose(file);
     return true;
 }
 
-bool authenticate_user(const char *username, const char *password) {
-    for (int i = 0; i < user_count; i++) {
-        if (strcmp(users[i].username, username) == 0 && strcmp(users[i].password, password) == 0) {
-            printf("Kullanıcı doğrulandı.\n");
-            return true;
+// Kullanıcıyı doğrular ve user_id döner
+int login_user(const char *username, const char *password) {
+    FILE *file = fopen(USERS_FILE, "r");
+    if (!file) {
+        perror("Kullanıcı dosyası açılamadı");
+        return -1;
+    }
+
+    char line[256];
+    char file_username[128], file_password[128];
+    int user_id;
+
+    while (fgets(line, sizeof(line), file)) {
+        sscanf(line, "%d:%[^:]:%s", &user_id, file_username, file_password);
+        if (strcmp(username, file_username) == 0 && strcmp(password, file_password) == 0) {
+            fclose(file);
+            return user_id;
         }
     }
 
-    printf("Kullanıcı doğrulama başarısız.\n");
-    return false;
+    fclose(file);
+    return -1; // Kullanıcı bulunamadı veya şifre hatalı
 }
