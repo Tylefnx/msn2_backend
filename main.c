@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <arpa/inet.h>
-#include "auth.c" // auth.c'yi dahil ediyoruz
+#include "auth.c" // auth.c'yi dahil ediyor
 
 #define PORT 8080
 #define BUFFER_SIZE 1024
@@ -47,11 +47,11 @@ void handle_request(int client_socket) {
         char username[128], password[128];
         sscanf(body, "username=%127[^&]&password=%127s", username, password);
 
-        int user_id = login_user(username, password);
-        if (user_id > 0) {
+        char token[65]; // SHA-256 token (64 karakter + null sonlandırıcı)
+        if (login_user(username, password, token)) {
             snprintf(response, sizeof(response),
                      "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n"
-                     "{\"status\": \"success\", \"user_id\": %d}", user_id);
+                     "{\"status\": \"success\", \"token\": \"%s\"}", token);
         } else {
             snprintf(response, sizeof(response),
                      "HTTP/1.1 401 Unauthorized\r\nContent-Type: application/json\r\n\r\n"
