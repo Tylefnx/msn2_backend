@@ -60,3 +60,4 @@ bool login_user(const char *username, const char *password, char *token) {
 
     fclose(file);
     return false; // Kullanıcı bulunamadı veya şifre hatalı
+}

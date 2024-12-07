@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <arpa/inet.h>
-#include "auth.c" // auth.c'yi dahil ediyor
+#include "auth/auth.c" // auth.c'yi dahil ediyor
 
 #define PORT 8080
 #define BUFFER_SIZE 1024
