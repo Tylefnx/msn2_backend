@@ -3,9 +3,20 @@
 #include <stdlib.h>
 #include <jwt.h>
 #include <stdio.h>
+#include <openssl/sha.h>
 
 UserDB users[100]; // Maksimum 100 kullanıcı
 int user_count = 0;
+
+// Parola hash'leme fonksiyonu
+void hash_password(const char *password, char *hash) {
+    unsigned char hash_bytes[SHA256_DIGEST_LENGTH];
+    SHA256((unsigned char*)password, strlen(password), hash_bytes);
+    for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
+        sprintf(hash + (i * 2), "%02x", hash_bytes[i]);
+    }
+    hash[SHA256_DIGEST_LENGTH * 2] = '\0';
+}
 
 // Kullanıcıları dosyaya kaydetme fonksiyonu
 void save_users_to_file() {
@@ -57,7 +68,7 @@ char* register_user(User user) {
 
     // Kullanıcıyı kaydet
     strcpy(users[user_count].username, user.username);
-    strcpy(users[user_count].password, user.password);
+    hash_password(user.password, users[user_count].password);
     user_count++;
     save_users_to_file(); // Kullanıcıları dosyaya kaydet
 
@@ -65,9 +76,11 @@ char* register_user(User user) {
 }
 
 char* login_user(User user) {
+    char hashed_password[65];
+    hash_password(user.password, hashed_password);
     // Kullanıcıyı doğrula
     for (int i = 0; i < user_count; i++) {
-        if (strcmp(users[i].username, user.username) == 0 && strcmp(users[i].password, user.password) == 0) {
+        if (strcmp(users[i].username, user.username) == 0 && strcmp(users[i].password, hashed_password) == 0) {
             // Kullanıcı doğrulandı, JWT token oluştur
             return generate_jwt_token(user.username);
         }

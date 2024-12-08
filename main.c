@@ -1,10 +1,14 @@
 #include "request_handlers.h"
+#include "auth.h"
+#include "friends.h"
+#include "messages.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <json-c/json.h>
+#include <jwt.h>
 
 #define PORT 8080
 #define BUFFER_SIZE 1024
@@ -15,9 +19,27 @@ typedef struct {
     char data[BUFFER_SIZE];
 } Request;
 
+// Token doğrulama fonksiyonu
+int validate_token(const char* token, char* username) {
+    jwt_t *jwt = NULL;
+    if (jwt_decode(&jwt, token, (unsigned char*)"secret_key", strlen("secret_key")) != 0) {
+        return 0; // Token geçersiz
+    }
+    const char* sub = jwt_get_grant(jwt, "sub");
+    if (sub == NULL) {
+        jwt_free(jwt);
+        return 0; // Token geçersiz
+    }
+    strcpy(username, sub);
+    jwt_free(jwt);
+    return 1; // Token geçerli
+}
+
 // Request işleme fonksiyonu
 void process_request(Request req, int client_socket) {
     struct json_object *parsed_json = NULL;
+    struct json_object *token_obj = NULL;
+    char username[50];
 
     printf("Processing request for endpoint: %s\n", req.endpoint);  // Debug çıkışı
 
@@ -28,21 +50,33 @@ void process_request(Request req, int client_socket) {
     }
 
     printf("Parsed JSON data: %s\n", json_object_to_json_string(parsed_json));  // Debug çıkışı
-    
+
     if (strcmp(req.endpoint, "/register") == 0) {
         handle_register_request(parsed_json, client_socket);
     } else if (strcmp(req.endpoint, "/login") == 0) {
         handle_login_request(parsed_json, client_socket);
-    } else if (strcmp(req.endpoint, "/add_friend") == 0) {
-        handle_add_friend_request(parsed_json, client_socket);
-    } else if (strcmp(req.endpoint, "/remove_friend") == 0) {
-        handle_remove_friend_request(parsed_json, client_socket);
-    } else if (strcmp(req.endpoint, "/send_message") == 0) {
-        handle_send_message_request(parsed_json, client_socket);
-    } else if (strcmp(req.endpoint, "/list_friends") == 0) {
-        handle_list_friends_request(parsed_json, client_socket);
     } else {
-        send_json_response(client_socket, 400, "Unknown endpoint", NULL);
+        // Token kontrolü diğer endpoint'ler için
+        if (!json_object_object_get_ex(parsed_json, "token", &token_obj) ||
+            !validate_token(json_object_get_string(token_obj), username)) {
+            send_json_response(client_socket, 401, "Invalid or missing token", NULL);
+            json_object_put(parsed_json);  // JSON nesnesini serbest bırak
+            return;
+        }
+
+        if (strcmp(req.endpoint, "/add_friend") == 0) {
+            handle_add_friend_request(parsed_json, client_socket);
+        } else if (strcmp(req.endpoint, "/remove_friend") == 0) {
+            handle_remove_friend_request(parsed_json, client_socket);
+        } else if (strcmp(req.endpoint, "/send_message") == 0) {
+            handle_send_message_request(parsed_json, client_socket);
+        } else if (strcmp(req.endpoint, "/list_friends") == 0) {
+            handle_list_friends_request(parsed_json, client_socket);
+        } else if (strcmp(req.endpoint, "/list_messages") == 0) {
+            handle_list_messages_request(parsed_json, client_socket);
+        } else {
+            send_json_response(client_socket, 400, "Unknown endpoint", NULL);
+        }
     }
 
     json_object_put(parsed_json);  // JSON nesnesini serbest bırak
@@ -55,6 +89,11 @@ int main() {
     int addrlen = sizeof(address);
     char buffer[BUFFER_SIZE] = {0};
     Request req;
+
+    // Kullanıcı verilerini, arkadaş listesini ve mesajları dosyadan yükle
+    load_users_from_file();
+    load_friends_from_file();
+    load_messages_from_file();
 
     // Soket oluştur
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {

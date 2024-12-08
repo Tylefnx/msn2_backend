@@ -17,4 +17,8 @@ void send_message(Message msg);
 void save_messages_to_file();
 void load_messages_from_file();
 
+// Mesaj veritabanı ve mesaj sayısı
+extern MessageDB messages[1000];
+extern int message_count;
+
 #endif // MESSAGES_H
