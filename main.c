@@ -40,7 +40,6 @@ int validate_token(const char* token, char* username) {
     return 1; // Token geçerli
 }
 
-// Request işleme fonksiyonu
 void process_request(int client_socket) {
     char buffer[BUFFER_SIZE] = {0};
     Request req;
@@ -72,8 +71,7 @@ void process_request(int client_socket) {
             char username[50];
             if (strcmp(req.endpoint, "/list_users") == 0) {
                 handle_list_users_request(client_socket);
-            }
-            else if (strcmp(req.endpoint, "/register") == 0) {
+            } else if (strcmp(req.endpoint, "/register") == 0) {
                 handle_register_request(parsed_json, client_socket);
             } else if (strcmp(req.endpoint, "/login") == 0) {
                 handle_login_request(parsed_json, client_socket);
@@ -87,17 +85,17 @@ void process_request(int client_socket) {
                 }
                 if (strcmp(req.endpoint, "/add_friend") == 0) {
                     handle_add_friend_request(parsed_json, client_socket);
-                } else if (strcmp(req.endpoint, "/respond_friend") == 0){
+                } else if (strcmp(req.endpoint, "/respond_friend") == 0) {
                     handle_respond_friend_request(parsed_json, client_socket);
                 } else if (strcmp(req.endpoint, "/remove_friend") == 0) {
                     handle_remove_friend_request(parsed_json, client_socket);
                 } else if (strcmp(req.endpoint, "/send_message") == 0) {
                     handle_send_message_request(parsed_json, client_socket);
-                }else if (strcmp(req.endpoint, "/list_chats") == 0){
+                } else if (strcmp(req.endpoint, "/list_chats") == 0) {
                     handle_list_chats_request(parsed_json, client_socket);
-                } else if (strcmp(req.endpoint, "/list_messages") == 0){
+                } else if (strcmp(req.endpoint, "/list_messages") == 0) {
                     handle_list_messages_request(parsed_json, client_socket);
-                } else if(strcmp(req.endpoint, "/list_friends") == 0) {
+                } else if (strcmp(req.endpoint, "/list_friends") == 0) {
                     handle_list_friends_request(parsed_json, client_socket);
                 } else {
                     send_json_response(client_socket, 400, "Unknown endpoint", NULL);
@@ -115,6 +113,7 @@ void process_request(int client_socket) {
     // Bağlantıyı kapat
     close(client_socket);
 }
+
 
 void* handle_client(void* arg) {
     client_info* client = (client_info*)arg;
