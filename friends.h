@@ -16,6 +16,8 @@ typedef struct {
 } UserFriends;
 
 UserFriends* find_user_friends(const char* username);
+void save_friends_to_file();
+void load_friends_from_file();
 
 // Arkadaş listesi veritabanı
 extern UserFriends user_friends[100];
