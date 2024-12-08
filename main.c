@@ -70,8 +70,10 @@ void process_request(int client_socket) {
 
             struct json_object *token_obj = NULL;
             char username[50];
-
-            if (strcmp(req.endpoint, "/register") == 0) {
+            if (strcmp(req.endpoint, "/list_users") == 0) {
+                handle_list_users_request(client_socket);
+            }
+            else if (strcmp(req.endpoint, "/register") == 0) {
                 handle_register_request(parsed_json, client_socket);
             } else if (strcmp(req.endpoint, "/login") == 0) {
                 handle_login_request(parsed_json, client_socket);
@@ -89,7 +91,9 @@ void process_request(int client_socket) {
                     handle_remove_friend_request(parsed_json, client_socket);
                 } else if (strcmp(req.endpoint, "/send_message") == 0) {
                     handle_send_message_request(parsed_json, client_socket);
-                } else if (strcmp(req.endpoint, "/list_friends") == 0) {
+                } else if (strcmp(req.endpoint, "/list_messages") == 0){
+                    handle_list_messages_request(parsed_json, client_socket);
+                } else if(strcmp(req.endpoint, "/list_friends") == 0) {
                     handle_list_friends_request(parsed_json, client_socket);
                 } else {
                     send_json_response(client_socket, 400, "Unknown endpoint", NULL);
