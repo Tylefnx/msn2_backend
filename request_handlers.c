@@ -165,3 +165,22 @@ void handle_list_messages_request(struct json_object *parsed_json, int client_so
         send_json_response(client_socket, 400, "Missing username", NULL);
     }
 }
+
+void handle_list_users_request(int client_socket) { 
+    UserDB* users = get_all_users(); 
+    int user_count = get_user_count(); 
+    struct json_object *users_array = json_object_new_array(); 
+    for (int i = 0; i < user_count; i++) { 
+        struct json_object *user_obj = json_object_new_object(); 
+        json_object_object_add(user_obj, "username", json_object_new_string(users[i].username)); 
+        json_object_array_add(users_array, user_obj); 
+    } 
+    struct json_object *json_response = json_object_new_object(); 
+    json_object_object_add(json_response, "status", json_object_new_int(200)); 
+    json_object_object_add(json_response, "users", users_array); 
+    const char* json_str = json_object_to_json_string(json_response); 
+    char response[BUFFER_SIZE]; 
+    snprintf(response, sizeof(response), "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n%s\n", json_str); 
+    send(client_socket, response, strlen(response), 0); 
+    json_object_put(json_response); 
+}
