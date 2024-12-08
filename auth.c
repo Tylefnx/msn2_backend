@@ -15,7 +15,9 @@ int user_count = 0;
 // JWT Token oluşturma işlevi
 char* generate_jwt_token(char* username) {
     jwt_t *jwt = NULL;
-    jwt_new(&jwt);
+    if (jwt_new(&jwt) != 0) {
+        return NULL; // JWT oluşturulamazsa NULL döner
+    }
     jwt_add_grant(jwt, "sub", username);
     jwt_set_alg(jwt, JWT_ALG_HS256, (unsigned char*)"secret_key", strlen("secret_key"));
     char* token = jwt_encode_str(jwt);

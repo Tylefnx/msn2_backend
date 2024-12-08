@@ -17,91 +17,143 @@ typedef struct {
     char data[BUFFER_SIZE];
 } Request;
 
+// JSON response oluşturma yardımcı işlevi
+void send_json_response(int client_socket, int status_code, const char* message, const char* token) {
+    struct json_object *json_response = json_object_new_object();
+    json_object_object_add(json_response, "status", json_object_new_int(status_code));
+    json_object_object_add(json_response, "message", json_object_new_string(message));
+    if (token != NULL) {
+        json_object_object_add(json_response, "token", json_object_new_string(token));
+    }
+    const char* json_str = json_object_to_json_string(json_response);
+    char response[BUFFER_SIZE];
+    snprintf(response, sizeof(response), "HTTP/1.1 %d OK\r\nContent-Type: application/json\r\n\r\n%s\n", status_code, json_str);
+    send(client_socket, response, strlen(response), 0);
+    json_object_put(json_response);  // JSON nesnesini serbest bırak
+    printf("Response sent: %s\n", response);  // Debug çıkışı
+}
+
 // Request işleme fonksiyonu
 void process_request(Request req, int client_socket) {
-    char response[BUFFER_SIZE];
-    memset(response, 0, sizeof(response));  // response'u sıfırla
-    
-    struct json_object *parsed_json;
-    struct json_object *username;
-    struct json_object *password;
-    struct json_object *friend_username;
-    struct json_object *message;
+    struct json_object *parsed_json = NULL;
+    struct json_object *username = NULL;
+    struct json_object *password = NULL;
+    struct json_object *friend_username = NULL;
+    struct json_object *message = NULL;
+
+    printf("Processing request for endpoint: %s\n", req.endpoint);  // Debug çıkışı
 
     parsed_json = json_tokener_parse(req.data);
-    
-    if (strcmp(req.endpoint, "/register") == 0) {
-        json_object_object_get_ex(parsed_json, "username", &username);
-        json_object_object_get_ex(parsed_json, "password", &password);
-        
-        User user;
-        strcpy(user.username, json_object_get_string(username));
-        strcpy(user.password, json_object_get_string(password));
-        
-        snprintf(response, sizeof(response), "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\n%s\n", register_user(user));
-    } else if (strcmp(req.endpoint, "/login") == 0) {
-        json_object_object_get_ex(parsed_json, "username", &username);
-        json_object_object_get_ex(parsed_json, "password", &password);
-
-        User user;
-        strcpy(user.username, json_object_get_string(username));
-        strcpy(user.password, json_object_get_string(password));
-        
-        snprintf(response, sizeof(response), "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nToken: %s\n", login_user(user));
-    } else if (strcmp(req.endpoint, "/add_friend") == 0) {
-        json_object_object_get_ex(parsed_json, "username", &username);
-        json_object_object_get_ex(parsed_json, "friend_username", &friend_username);
-
-        FriendRequest req_data;
-        strcpy(req_data.username, json_object_get_string(username));
-        strcpy(req_data.friend_username, json_object_get_string(friend_username));
-
-        add_friend(req_data);
-        snprintf(response, sizeof(response), "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nFriend added.\n");
-    } else if (strcmp(req.endpoint, "/remove_friend") == 0) {
-        json_object_object_get_ex(parsed_json, "username", &username);
-        json_object_object_get_ex(parsed_json, "friend_username", &friend_username);
-
-        FriendRequest req_data;
-        strcpy(req_data.username, json_object_get_string(username));
-        strcpy(req_data.friend_username, json_object_get_string(friend_username));
-        
-        remove_friend(req_data);
-        snprintf(response, sizeof(response), "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nFriend removed.\n");
-    } else if (strcmp(req.endpoint, "/send_message") == 0) {
-        json_object_object_get_ex(parsed_json, "sender", &username);
-        json_object_object_get_ex(parsed_json, "receiver", &friend_username);
-        json_object_object_get_ex(parsed_json, "message", &message);
-
-        Message msg;
-        strcpy(msg.sender, json_object_get_string(username));
-        strcpy(msg.receiver, json_object_get_string(friend_username));
-        strcpy(msg.message, json_object_get_string(message));
-        
-        send_message(msg);
-        snprintf(response, sizeof(response), "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nMessage sent.\n");
-    } else if (strcmp(req.endpoint, "/list_friends") == 0) {
-        json_object_object_get_ex(parsed_json, "username", &username);
-        
-        UserFriends* user = find_user_friends(json_object_get_string(username));
-        if (user == NULL) {
-            snprintf(response, sizeof(response), "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\r\nUser not found.\n");
-        } else {
-            snprintf(response, sizeof(response), "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nFriends of %s:\n", json_object_get_string(username));
-            send(client_socket, response, strlen(response), 0);
-            for (int i = 0; i < user->friend_count; i++) {
-                snprintf(response, sizeof(response), "- %s\n", user->friends[i]);
-                send(client_socket, response, strlen(response), 0);
-            }
-            json_object_put(parsed_json);  // JSON nesnesini serbest bırak
-            return; // Yanıtı gönderdiğimiz için fonksiyonu bitir
-        }
-    } else {
-        snprintf(response, sizeof(response), "HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\n\r\nUnknown endpoint: %s\n", req.endpoint);
+    if (!parsed_json) {
+        send_json_response(client_socket, 400, "Invalid JSON format", NULL);
+        return;
     }
 
-    send(client_socket, response, strlen(response), 0);
-    json_object_put(parsed_json);  // JSON nesnesini serbest bırak
+    printf("Parsed JSON data: %s\n", json_object_to_json_string(parsed_json));  // Debug çıkışı
+    
+    if (strcmp(req.endpoint, "/register") == 0) {
+        if (json_object_object_get_ex(parsed_json, "username", &username) &&
+            json_object_object_get_ex(parsed_json, "password", &password)) {
+            
+            User user;
+            strcpy(user.username, json_object_get_string(username));
+            strcpy(user.password, json_object_get_string(password));
+            
+            const char* result = register_user(user);
+            send_json_response(client_socket, 200, result, NULL);
+        } else {
+            send_json_response(client_socket, 400, "Missing username or password", NULL);
+        }
+    } else if (strcmp(req.endpoint, "/login") == 0) {
+        if (json_object_object_get_ex(parsed_json, "username", &username) &&
+            json_object_object_get_ex(parsed_json, "password", &password)) {
+
+            User user;
+            strcpy(user.username, json_object_get_string(username));
+            strcpy(user.password, json_object_get_string(password));
+            
+            char* token = login_user(user);
+            if (strcmp(token, "Invalid username or password!") == 0) {
+                send_json_response(client_socket, 401, "Invalid username or password", NULL);
+            } else if (token != NULL) {
+                send_json_response(client_socket, 200, "Login successful", token);
+                free(token);  // Token bellekten serbest bırak
+            } else {
+                send_json_response(client_socket, 500, "Failed to generate token", NULL);
+            }
+        } else {
+            send_json_response(client_socket, 400, "Missing username or password", NULL);
+        }
+    } else if (strcmp(req.endpoint, "/add_friend") == 0) {
+        if (json_object_object_get_ex(parsed_json, "username", &username) &&
+            json_object_object_get_ex(parsed_json, "friend_username", &friend_username)) {
+
+            FriendRequest req_data;
+            strcpy(req_data.username, json_object_get_string(username));
+            strcpy(req_data.friend_username, json_object_get_string(friend_username));
+
+            add_friend(req_data);
+            send_json_response(client_socket, 200, "Friend added", NULL);
+        } else {
+            send_json_response(client_socket, 400, "Missing username or friend_username", NULL);
+        }
+    } else if (strcmp(req.endpoint, "/remove_friend") == 0) {
+        if (json_object_object_get_ex(parsed_json, "username", &username) &&
+            json_object_object_get_ex(parsed_json, "friend_username", &friend_username)) {
+
+            FriendRequest req_data;
+            strcpy(req_data.username, json_object_get_string(username));
+            strcpy(req_data.friend_username, json_object_get_string(friend_username));
+            
+            remove_friend(req_data);
+            send_json_response(client_socket, 200, "Friend removed", NULL);
+        } else {
+            send_json_response(client_socket, 400, "Missing username or friend_username", NULL);
+        }
+    } else if (strcmp(req.endpoint, "/send_message") == 0) {
+        if (json_object_object_get_ex(parsed_json, "sender", &username) &&
+            json_object_object_get_ex(parsed_json, "receiver", &friend_username) &&
+            json_object_object_get_ex(parsed_json, "message", &message)) {
+
+            Message msg;
+            strcpy(msg.sender, json_object_get_string(username));
+            strcpy(msg.receiver, json_object_get_string(friend_username));
+            strcpy(msg.message, json_object_get_string(message));
+            
+            send_message(msg);
+            send_json_response(client_socket, 200, "Message sent", NULL);
+        } else {
+            send_json_response(client_socket, 400, "Missing sender, receiver, or message", NULL);
+        }
+    } else if (strcmp(req.endpoint, "/list_friends") == 0) {
+        if (json_object_object_get_ex(parsed_json, "username", &username)) {
+            UserFriends* user = find_user_friends(json_object_get_string(username));
+            if (user == NULL) {
+                send_json_response(client_socket, 404, "User not found", NULL);
+            } else {
+                struct json_object *friends_list = json_object_new_array();
+                for (int i = 0; i < user->friend_count; i++) {
+                    json_object_array_add(friends_list, json_object_new_string(user->friends[i]));
+                }
+                struct json_object *json_response = json_object_new_object();
+                json_object_object_add(json_response, "status", json_object_new_int(200));
+                json_object_object_add(json_response, "friends", friends_list);
+                const char* json_str = json_object_to_json_string(json_response);
+                char response[BUFFER_SIZE];
+                snprintf(response, sizeof(response), "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n%s\n", json_str);
+                send(client_socket, response, strlen(response), 0);
+                json_object_put(json_response);  // JSON nesnesini serbest bırak
+            }
+        } else {
+            send_json_response(client_socket, 400, "Missing username", NULL);
+        }
+    } else {
+        send_json_response(client_socket, 400, "Unknown endpoint", NULL);
+    }
+
+    json_object_put(parsed_json);
+
+        printf("Request processing completed for endpoint: %s\n", req.endpoint);  // Debug çıkışı
 }
 
 int main() {
@@ -161,12 +213,10 @@ int main() {
                 strcpy(req.data, json_start + 4);  // JSON verisini kopyala
                 process_request(req, new_socket);
             } else {
-                char *response = "HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\n\r\nInvalid request format.\n";
-                send(new_socket, response, strlen(response), 0);
+                send_json_response(new_socket, 400, "Invalid request format", NULL);
             }
         } else {
-            char *response = "HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\n\r\nInvalid request format.\n";
-            send(new_socket, response, strlen(response), 0);
+            send_json_response(new_socket, 400, "Invalid request format", NULL);
         }
 
         // Bağlantıyı kapat
