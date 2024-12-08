@@ -12,6 +12,10 @@ typedef struct {
 } User;
 
 // Kullanıcıları ve parolaları dosyaya kaydetme/yükleme işlevleri
+UserDB* get_all_users();
+int get_user_count();
+
+
 void load_users_from_file();
 void save_users_to_file();
 

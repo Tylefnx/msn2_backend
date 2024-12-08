@@ -8,6 +8,13 @@
 UserDB users[100]; // Maksimum 100 kullanıcı
 int user_count = 0;
 
+UserDB* get_all_users() { 
+    return users; 
+} 
+int get_user_count() { 
+    return user_count; 
+}
+
 // Parola hash'leme fonksiyonu
 void hash_password(const char *password, char *hash) {
     unsigned char hash_bytes[SHA256_DIGEST_LENGTH];
