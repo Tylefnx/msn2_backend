@@ -3,12 +3,12 @@
 
 typedef struct {
     char username[50];
-    char password[50];
+    char password[65];
 } UserDB;
 
 typedef struct {
     char username[50];
-    char password[50];
+    char password[65];
 } User;
 
 // Kullanıcıları ve parolaları dosyaya kaydetme/yükleme işlevleri
@@ -21,5 +21,5 @@ void hash_password(const char *password, char *hash);
 // Kullanıcı kayıt ve giriş işlevleri
 char* register_user(User user);
 char* login_user(User user);
-
+void print_users();
 #endif // AUTH_H

@@ -20,15 +20,23 @@ void hash_password(const char *password, char *hash) {
 
 // Kullanıcıları dosyaya kaydetme fonksiyonu
 void save_users_to_file() {
-    FILE *file = fopen("users.txt", "w");
+    FILE *file = fopen("users.txt", "w"); // Dosyayı yazma modunda aç
     if (file == NULL) {
         perror("Failed to open file for saving users");
         return;
     }
     for (int i = 0; i < user_count; i++) {
-        fprintf(file, "%s %s\n", users[i].username, users[i].password);
+        // Kullanıcı bilgilerini doğru formatta yazdığımızdan emin olalım
+        if (fprintf(file, "%s %s\n", users[i].username, users[i].password) < 0) {
+            perror("Failed to write user to file");
+        }
     }
-    fclose(file);
+    if (fflush(file) != 0) {
+        perror("Failed to flush file buffer");
+    }
+    if (fclose(file) != 0) {
+        perror("Failed to close file");
+    }
 }
 
 // Dosyadan kullanıcıları yükleme fonksiyonu
@@ -39,10 +47,29 @@ void load_users_from_file() {
         return;
     }
     user_count = 0;
-    while (fscanf(file, "%s %s", users[user_count].username, users[user_count].password) == 2) {
-        user_count++;
+    char line[120]; // Kullanıcı adı ve parolayı birlikte tutacak tampon
+    while (fgets(line, sizeof(line), file)) {
+        // Satırın sonunda yeni satır karakteri varsa kaldır
+        size_t len = strlen(line);
+        if (len > 0 && line[len - 1] == '\n') {
+            line[len - 1] = '\0';
+        }
+
+        // Kullanıcı adı ve parolayı boşluk karakterine göre ayır
+        char *username = strtok(line, " ");
+        char *password = strtok(NULL, " ");
+
+        if (username && password) {
+            strncpy(users[user_count].username, username, sizeof(users[user_count].username) - 1);
+            users[user_count].username[sizeof(users[user_count].username) - 1] = '\0';
+            strncpy(users[user_count].password, password, sizeof(users[user_count].password) - 1);
+            users[user_count].password[sizeof(users[user_count].password) - 1] = '\0';
+            user_count++;
+        }
     }
-    fclose(file);
+    if (fclose(file) != 0) {
+        perror("Failed to close file");
+    }
 }
 
 // JWT Token oluşturma işlevi
@@ -72,6 +99,9 @@ char* register_user(User user) {
     user_count++;
     save_users_to_file(); // Kullanıcıları dosyaya kaydet
 
+    // Kullanıcı listesini yeniden yükle
+    load_users_from_file();
+
     return "Register successful!";
 }
 
@@ -87,4 +117,11 @@ char* login_user(User user) {
     }
 
     return "Invalid username or password!";
+}
+
+// Kullanıcıları yazdırma fonksiyonu (Test için)
+void print_users() {
+    for (int i = 0; i < user_count; i++) {
+        printf("Username: %s, Password: %s\n", users[i].username, users[i].password);
+    }
 }
