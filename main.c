@@ -87,10 +87,14 @@ void process_request(int client_socket) {
                 }
                 if (strcmp(req.endpoint, "/add_friend") == 0) {
                     handle_add_friend_request(parsed_json, client_socket);
+                } else if (strcmp(req.endpoint, "/respond_friend") == 0){
+                    handle_respond_friend_request(parsed_json, client_socket);
                 } else if (strcmp(req.endpoint, "/remove_friend") == 0) {
                     handle_remove_friend_request(parsed_json, client_socket);
                 } else if (strcmp(req.endpoint, "/send_message") == 0) {
                     handle_send_message_request(parsed_json, client_socket);
+                }else if (strcmp(req.endpoint, "/list_chats") == 0){
+                    handle_list_chats_request(parsed_json, client_socket);
                 } else if (strcmp(req.endpoint, "/list_messages") == 0){
                     handle_list_messages_request(parsed_json, client_socket);
                 } else if(strcmp(req.endpoint, "/list_friends") == 0) {

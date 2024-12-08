@@ -16,8 +16,8 @@ typedef struct {
 void send_message(Message msg);
 void save_messages_to_file();
 void load_messages_from_file();
+void list_messages(const char* username, char* response);
 
-// Mesaj veritabanı ve mesaj sayısı
 extern MessageDB messages[1000];
 extern int message_count;
 

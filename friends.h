@@ -1,13 +1,25 @@
 #ifndef FRIENDS_H
 #define FRIENDS_H
+#include "messages.h"
 
 typedef struct {
-    char username[50];
-    char friend_username[50];
+    char requester[50];
+    char requestee[50];
+    int status; // 0: Beklemede, 1: Kabul edildi, 2: Reddedildi
 } FriendRequest;
 
-void add_friend(FriendRequest request);
-void remove_friend(FriendRequest request);
+extern FriendRequest friend_requests[100];
+extern int friend_request_count;
+
+typedef struct {
+    char sender[50];
+    char receiver[50];
+    MessageDB messages[1000];
+    int messages_count; // Toplam mesaj sayısı
+} ChatDB;
+
+extern ChatDB chat_db[100];
+extern int chat_db_count;
 
 typedef struct {
     char username[50];
@@ -15,12 +27,18 @@ typedef struct {
     int friend_count;
 } UserFriends;
 
-UserFriends* find_user_friends(const char* username);
+extern UserFriends user_friends[100];
+extern int user_friends_count;
+
 void save_friends_to_file();
 void load_friends_from_file();
 
-// Arkadaş listesi veritabanı
-extern UserFriends user_friends[100];
-extern int user_friends_count;
+char* add_friend_request(char* requester, char* requestee);
+char* respond_friend_request(char* requestee, char* requester, int response);
+void add_friend_to_user(char* username, char* friend_username);
+
+void remove_friend(char* username, char* friend_username);
+
+UserFriends* find_user_friends(const char* username);
 
 #endif // FRIENDS_H

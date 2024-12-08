@@ -1,7 +1,7 @@
-#include "request_handlers.h"
 #include "auth.h"
 #include "friends.h"
 #include "messages.h"
+#include "request_handlers.h"
 #include <json-c/json.h>
 #include <string.h>
 #include <stdlib.h>
@@ -11,7 +11,6 @@
 
 #define BUFFER_SIZE 1024
 
-// JSON response oluşturma yardımcı işlevi
 void send_json_response(int client_socket, int status_code, const char* message, const char* token) {
     struct json_object *json_response = json_object_new_object();
     json_object_object_add(json_response, "status", json_object_new_int(status_code));
@@ -23,8 +22,8 @@ void send_json_response(int client_socket, int status_code, const char* message,
     char response[BUFFER_SIZE];
     snprintf(response, sizeof(response), "HTTP/1.1 %d OK\r\nContent-Type: application/json\r\n\r\n%s\n", status_code, json_str);
     send(client_socket, response, strlen(response), 0);
-    json_object_put(json_response);  // JSON nesnesini serbest bırak
-    printf("Response sent: %s\n", response);  // Debug çıkışı
+    json_object_put(json_response);
+    printf("Response sent: %s\n", response);
 }
 
 void handle_register_request(struct json_object *parsed_json, int client_socket) {
@@ -57,7 +56,7 @@ void handle_login_request(struct json_object *parsed_json, int client_socket) {
             send_json_response(client_socket, 401, "Invalid username or password", NULL);
         } else if (token != NULL) {
             send_json_response(client_socket, 200, "Login successful", token);
-            free(token);  // Token bellekten serbest bırak
+            free(token);
         } else {
             send_json_response(client_socket, 500, "Failed to generate token", NULL);
         }
@@ -71,14 +70,29 @@ void handle_add_friend_request(struct json_object *parsed_json, int client_socke
     if (json_object_object_get_ex(parsed_json, "username", &username) &&
         json_object_object_get_ex(parsed_json, "friend_username", &friend_username)) {
 
-        FriendRequest req_data;
-        strcpy(req_data.username, json_object_get_string(username));
-        strcpy(req_data.friend_username, json_object_get_string(friend_username));
+        char* requester = (char*)json_object_get_string(username);
+        char* requestee = (char*)json_object_get_string(friend_username);
 
-        add_friend(req_data);
-        send_json_response(client_socket, 200, "Friend added", NULL);
+        const char* result = add_friend_request(requester, requestee);
+        send_json_response(client_socket, 200, result, NULL);
     } else {
         send_json_response(client_socket, 400, "Missing username or friend_username", NULL);
+    }
+}
+
+void handle_respond_friend_request(struct json_object *parsed_json, int client_socket) {
+    struct json_object *requestee, *requester, *response;
+    if (json_object_object_get_ex(parsed_json, "requestee", &requestee) &&
+        json_object_object_get_ex(parsed_json, "requester", &requester) &&
+        json_object_object_get_ex(parsed_json, "response", &response)) {
+
+        char* requestee_str = (char*)json_object_get_string(requestee);
+        char* requester_str = (char*)json_object_get_string(requester);
+
+        const char* result = respond_friend_request(requestee_str, requester_str, json_object_get_int(response));
+        send_json_response(client_socket, 200, result, NULL);
+    } else {
+        send_json_response(client_socket, 400, "Missing requestee, requester, or response", NULL);
     }
 }
 
@@ -87,11 +101,10 @@ void handle_remove_friend_request(struct json_object *parsed_json, int client_so
     if (json_object_object_get_ex(parsed_json, "username", &username) &&
         json_object_object_get_ex(parsed_json, "friend_username", &friend_username)) {
 
-        FriendRequest req_data;
-        strcpy(req_data.username, json_object_get_string(username));
-        strcpy(req_data.friend_username, json_object_get_string(friend_username));
-        
-        remove_friend(req_data);
+        char* username_str = (char*)json_object_get_string(username);
+        char* friend_username_str = (char*)json_object_get_string(friend_username);
+
+        remove_friend(username_str, friend_username_str);
         send_json_response(client_socket, 200, "Friend removed", NULL);
     } else {
         send_json_response(client_socket, 400, "Missing username or friend_username", NULL);
@@ -134,7 +147,7 @@ void handle_list_friends_request(struct json_object *parsed_json, int client_soc
             char response[BUFFER_SIZE];
             snprintf(response, sizeof(response), "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n%s\n", json_str);
             send(client_socket, response, strlen(response), 0);
-            json_object_put(json_response);  // JSON nesnesini serbest bırak
+            json_object_put(json_response);
         }
     } else {
         send_json_response(client_socket, 400, "Missing username", NULL);
@@ -145,12 +158,15 @@ void handle_list_messages_request(struct json_object *parsed_json, int client_so
     struct json_object *username;
     if (json_object_object_get_ex(parsed_json, "username", &username)) {
         struct json_object *messages_array = json_object_new_array();
-        for (int i = 0; i < message_count; i++) {
-            if (strcmp(messages[i].receiver, json_object_get_string(username)) == 0) {
-                struct json_object *message_obj = json_object_new_object();
-                json_object_object_add(message_obj, "sender", json_object_new_string(messages[i].sender));
-                json_object_object_add(message_obj, "message", json_object_new_string(messages[i].message));
-                json_object_array_add(messages_array, message_obj);
+        for (int i = 0; i < chat_db_count; i++) {
+            if (strcmp(chat_db[i].sender, json_object_get_string(username)) == 0 || strcmp(chat_db[i].receiver, json_object_get_string(username)) == 0) {
+                for (int j = 0; j < chat_db[i].messages_count; j++) {
+                    struct json_object *message_obj = json_object_new_object();
+                    json_object_object_add(message_obj, "sender", json_object_new_string(chat_db[i].messages[j].sender));
+                    json_object_object_add(message_obj, "receiver", json_object_new_string(chat_db[i].messages[j].receiver));
+                    json_object_object_add(message_obj, "message", json_object_new_string(chat_db[i].messages[j].message));
+                    json_object_array_add(messages_array, message_obj);
+                }
             }
         }
         struct json_object *json_response = json_object_new_object();
@@ -160,27 +176,54 @@ void handle_list_messages_request(struct json_object *parsed_json, int client_so
         char response[BUFFER_SIZE];
         snprintf(response, sizeof(response), "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n%s\n", json_str);
         send(client_socket, response, strlen(response), 0);
-        json_object_put(json_response);  // JSON nesnesini serbest bırak
+        json_object_put(json_response);
     } else {
         send_json_response(client_socket, 400, "Missing username", NULL);
     }
 }
 
-void handle_list_users_request(int client_socket) { 
-    UserDB* users = get_all_users(); 
-    int user_count = get_user_count(); 
-    struct json_object *users_array = json_object_new_array(); 
-    for (int i = 0; i < user_count; i++) { 
-        struct json_object *user_obj = json_object_new_object(); 
-        json_object_object_add(user_obj, "username", json_object_new_string(users[i].username)); 
-        json_object_array_add(users_array, user_obj); 
-    } 
-    struct json_object *json_response = json_object_new_object(); 
-    json_object_object_add(json_response, "status", json_object_new_int(200)); 
-    json_object_object_add(json_response, "users", users_array); 
-    const char* json_str = json_object_to_json_string(json_response); 
-    char response[BUFFER_SIZE]; 
-    snprintf(response, sizeof(response), "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n%s\n", json_str); 
-    send(client_socket, response, strlen(response), 0); 
-    json_object_put(json_response); 
+void handle_list_users_request(int client_socket) {
+    UserDB* users = get_all_users();
+    int user_count = get_user_count();
+
+    struct json_object *users_array = json_object_new_array();
+    for (int i = 0; i < user_count; i++) {
+        struct json_object *user_obj = json_object_new_object();
+        json_object_object_add(user_obj, "username", json_object_new_string(users[i].username));
+        json_object_array_add(users_array, user_obj);
+    }
+
+    struct json_object *json_response = json_object_new_object();
+    json_object_object_add(json_response, "status", json_object_new_int(200));
+    json_object_object_add(json_response, "users", users_array);
+    const char* json_str = json_object_to_json_string(json_response);
+    char response[BUFFER_SIZE];
+    snprintf(response, sizeof(response), "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n%s\n", json_str);
+    send(client_socket, response, strlen(response), 0);
+    json_object_put(json_response);
+}
+
+void handle_list_chats_request(struct json_object *parsed_json, int client_socket) {
+    struct json_object *username;
+    if (json_object_object_get_ex(parsed_json, "username", &username)) {
+        struct json_object *chats_array = json_object_new_array();
+        for (int i = 0; i < chat_db_count; i++) {
+            if (strcmp(chat_db[i].sender, json_object_get_string(username)) == 0 || strcmp(chat_db[i].receiver, json_object_get_string(username)) == 0) {
+                struct json_object *chat_obj = json_object_new_object();
+                json_object_object_add(chat_obj, "sender", json_object_new_string(chat_db[i].sender));
+                json_object_object_add(chat_obj, "receiver", json_object_new_string(chat_db[i].receiver));
+                json_object_array_add(chats_array, chat_obj);
+            }
+        }
+        struct json_object *json_response = json_object_new_object();
+        json_object_object_add(json_response, "status", json_object_new_int(200));
+        json_object_object_add(json_response, "chats", chats_array);
+        const char* json_str = json_object_to_json_string(json_response);
+        char response[BUFFER_SIZE];
+        snprintf(response, sizeof(response), "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n%s\n", json_str);
+        send(client_socket, response, strlen(response), 0);
+        json_object_put(json_response);
+    } else {
+        send_json_response(client_socket, 400, "Missing username", NULL);
+    }
 }
