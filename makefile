@@ -1,22 +1,19 @@
 CC = gcc
-CFLAGS = -Wall -I./include
+CFLAGS = -Wall -Wextra -Werror
+LDFLAGS = -ljson-c -ljwt
+SOURCES = main.c auth.c friends.c messages.c
+OBJECTS = $(SOURCES:.c=.o)
+EXECUTABLE = server
 
-# Derleme hedefleri
-OBJ = src/auth.o src/messages.o src/server.o
-TARGET = server
+all: $(EXECUTABLE)
 
-# Derleme komutları
-$(TARGET): $(OBJ)
-	$(CC) $(OBJ) -o $(TARGET) -lmicrohttpd
+$(EXECUTABLE): $(OBJECTS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-src/auth.o: src/auth.c
-	$(CC) $(CFLAGS) -c src/auth.c -o src/auth.o
-
-src/messages.o: src/messages.c
-	$(CC) $(CFLAGS) -c src/messages.c -o src/messages.o
-
-src/server.o: src/server.c
-	$(CC) $(CFLAGS) -c src/server.c -o src/server.o
+%.o: %.c
+	$(CC) $(CFLAGS) -c $<
 
 clean:
-	rm -f src/*.o $(TARGET)
+	rm -f $(OBJECTS) $(EXECUTABLE)
+
+.PHONY: clean
