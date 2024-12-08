@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -Werror
 LDFLAGS = -ljson-c -ljwt
-SOURCES = main.c auth.c friends.c messages.c
+SOURCES = main.c auth.c friends.c messages.c request_handlers.c
 OBJECTS = $(SOURCES:.c=.o)
 EXECUTABLE = server
 
