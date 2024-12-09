@@ -2,6 +2,20 @@
 #define REQUEST_HANDLERS_H
 
 #include <json-c/json.h>
+#include <stdlib.h>
+#include <arpa/inet.h>
+
+#define BUFFER_SIZE 1024
+
+typedef struct {
+    int client_socket;
+    struct sockaddr_in client_address;
+} client_info;
+
+typedef struct {
+    char endpoint[50];
+    char data[BUFFER_SIZE];
+} Request;
 
 // Fonksiyon bildirimleri
 void send_json_response(int client_socket, int status_code, const char* message, const char* token);

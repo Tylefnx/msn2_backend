@@ -1,13 +1,14 @@
-#include "../auth/auth.h"
-#include "../friends/friends.h"
-#include "messages.h"
-#include "../request_handlers.h"
 #include <json-c/json.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+
+#include "messages.h"
+#include "../auth/auth.h"
+#include "../friends/friends.h"
+#include "../srv/request_handlers.h"
 
 #define BUFFER_SIZE 1024
 

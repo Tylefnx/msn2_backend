@@ -1,8 +1,8 @@
 #include "../auth/auth.h"
-#include "../send_json_response.c"
+#include "../srv/send_json_response.h"
 #include "friends.h"
 #include "../messages/messages.h"
-#include "../request_handlers.h"
+#include "../srv/request_handlers.h"
 #include <json-c/json.h>
 #include <string.h>
 #include <stdlib.h>

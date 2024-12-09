@@ -1,4 +1,4 @@
-#include "request_handlers.h"
+#include "send_json_response.h"
 #include <json-c/json.h>
 #include <string.h>
 #include <stdlib.h>

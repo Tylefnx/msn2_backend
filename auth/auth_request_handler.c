@@ -1,5 +1,5 @@
 #include "auth.h"
-#include "../request_handlers.h"
+#include "../srv/request_handlers.h"
 #include <json-c/json.h>
 #include <string.h>
 #include <stdlib.h>
