@@ -39,7 +39,7 @@ void add_friend_to_user(char* username, char* friend_username);
 char* respond_friend_request(char* requestee, char* requester, int response);
 char* add_friend_request(char* requester, char* requestee);
 void remove_friend(char* username, char* friend_username);
-
+void remove_friend_request(int index);
 UserFriends* find_user_friends(const char* username);
 char* list_friend_requests();
 #endif // FRIENDS_H

@@ -150,14 +150,28 @@ char* respond_friend_request(char* requestee, char* requester, int response) {
                     save_chat_db_to_file();
                 }
 
+                // Arkadaşlık isteğini listeden kaldır
+                remove_friend_request(i);
                 return "Friend request accepted!";
             } else if (response == 2) {
                 friend_requests[i].status = 2;
+                // Arkadaşlık isteğini listeden kaldır
+                remove_friend_request(i);
                 return "Friend request declined!";
             }
         }
     }
     return "No friend request found!";
+}
+
+void remove_friend_request(int index) {
+    if (index < 0 || index >= friend_request_count) {
+        return;
+    }
+    for (int i = index; i < friend_request_count - 1; i++) {
+        friend_requests[i] = friend_requests[i + 1];
+    }
+    friend_request_count--;
 }
 
 
