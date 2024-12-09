@@ -16,4 +16,5 @@ void handle_list_messages_request(struct json_object *parsed_json, int client_so
 void handle_list_users_request(int client_socket);
 void handle_list_chats_request(struct json_object *parsed_json, int client_socket);
 void handle_list_friend_requests(int client_socket);
+void handle_list_specific_chat_request(struct json_object *parsed_json, int client_socket);
 #endif // REQUEST_HANDLERS_H

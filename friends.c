@@ -106,12 +106,15 @@ char* add_friend_request(char* requester, char* requestee) {
         }
     }
 
+    // Daha önce arkadaşlık isteği gönderilip gönderilmediğini kontrol et
     for (int i = 0; i < friend_request_count; i++) {
         if (strcmp(friend_requests[i].requester, requester) == 0 &&
             strcmp(friend_requests[i].requestee, requestee) == 0) {
             return "Friend request already sent!";
         }
     }
+
+    // Yeni arkadaşlık isteği ekle
     strncpy(friend_requests[friend_request_count].requester, requester, sizeof(friend_requests[friend_request_count].requester) - 1);
     strncpy(friend_requests[friend_request_count].requestee, requestee, sizeof(friend_requests[friend_request_count].requestee) - 1);
     friend_requests[friend_request_count].status = 0;

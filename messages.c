@@ -35,7 +35,7 @@ void load_messages_from_file() {
     fclose(file);
 }
 
-void send_message(Message msg) {
+void send_message(MessageDB msg) {
     // Mesajı veritabanına kaydet
     if (message_count < 1000) {
         strcpy(messages[message_count].sender, msg.sender);
@@ -43,23 +43,25 @@ void send_message(Message msg) {
         strcpy(messages[message_count].message, msg.message);
         message_count++;
 
-        // ChatDB yapısına ekle
+        // Mesajı iki farklı sohbete ekle
         for (int i = 0; i < chat_db_count; i++) {
             if ((strcmp(chat_db[i].sender, msg.sender) == 0 && strcmp(chat_db[i].receiver, msg.receiver) == 0) ||
                 (strcmp(chat_db[i].sender, msg.receiver) == 0 && strcmp(chat_db[i].receiver, msg.sender) == 0)) {
+                
                 int msg_index = chat_db[i].messages_count++;
                 strcpy(chat_db[i].messages[msg_index].sender, msg.sender);
                 strcpy(chat_db[i].messages[msg_index].receiver, msg.receiver);
                 strcpy(chat_db[i].messages[msg_index].message, msg.message);
-                break;
             }
         }
 
         save_messages_to_file();
+        save_chat_db_to_file();
     } else {
         printf("Message storage is full!\n");
     }
 }
+
 
 void list_messages(const char* username, char* response) {
     strcpy(response, "{ \"messages\": [");

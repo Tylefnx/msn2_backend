@@ -32,11 +32,12 @@ extern int user_friends_count;
 
 void save_friends_to_file();
 void load_friends_from_file();
+void save_chat_db_to_file();
 
-char* add_friend_request(char* requester, char* requestee);
-char* respond_friend_request(char* requestee, char* requester, int response);
 void add_friend_to_user(char* username, char* friend_username);
 
+char* respond_friend_request(char* requestee, char* requester, int response);
+char* add_friend_request(char* requester, char* requestee);
 void remove_friend(char* username, char* friend_username);
 
 UserFriends* find_user_friends(const char* username);
