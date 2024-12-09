@@ -1,4 +1,5 @@
 #include "friends.h"
+#include "../auth/auth.h"
 #include "../messages/messages.h"
 #include <string.h>
 #include <stdlib.h>
@@ -96,6 +97,12 @@ UserFriends* find_user_friends(const char* username) {
 }
 
 char* add_friend_request(char* requester, char* requestee) {
+    // Kullanıcıların varlığını kontrol et
+    UserDB* requestee_user = find_user(requestee);
+    if (requestee_user == NULL) {
+        return "User does not exist!";
+    }
+
     // Kullanıcıların zaten arkadaş olup olmadığını kontrol et
     UserFriends* user_friends = find_user_friends(requester);
     if (user_friends != NULL) {
@@ -121,6 +128,7 @@ char* add_friend_request(char* requester, char* requestee) {
     friend_request_count++;
     return "Friend request sent!";
 }
+
 
 char* respond_friend_request(char* requestee, char* requester, int response) {
     for (int i = 0; i < friend_request_count; i++) {

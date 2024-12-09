@@ -15,6 +15,15 @@ int get_user_count() {
     return user_count; 
 }
 
+UserDB* find_user(const char* username) {
+    for (int i = 0; i < user_count; i++) {
+        if (strcmp(users[i].username, username) == 0) {
+            return &users[i];
+        }
+    }
+    return NULL;
+}
+
 // Parola hash'leme fonksiyonu
 void hash_password(const char *password, char *hash) {
     unsigned char hash_bytes[SHA256_DIGEST_LENGTH];
