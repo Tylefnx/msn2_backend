@@ -117,7 +117,7 @@ void handle_send_message_request(struct json_object *parsed_json, int client_soc
         json_object_object_get_ex(parsed_json, "receiver", &receiver) &&
         json_object_object_get_ex(parsed_json, "message", &message)) {
 
-        Message msg;
+        MessageDB msg;
         strcpy(msg.sender, json_object_get_string(sender));
         strcpy(msg.receiver, json_object_get_string(receiver));
         strcpy(msg.message, json_object_get_string(message));

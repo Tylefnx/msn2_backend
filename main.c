@@ -99,6 +99,8 @@ void process_request(int client_socket) {
                     handle_list_friends_request(parsed_json, client_socket);
                 } else if (strcmp(req.endpoint, "/list_friend_requests") == 0) {
                     handle_list_friend_requests(client_socket);
+                } else if (strcmp(req.endpoint, "/list_specific_chat") == 0) {
+                    handle_list_specific_chat_request(parsed_json, client_socket);
                 } else {
                     send_json_response(client_socket, 400, "Unknown endpoint", NULL);
                 }
@@ -115,7 +117,6 @@ void process_request(int client_socket) {
     // Bağlantıyı kapat
     close(client_socket);
 }
-
 
 void* handle_client(void* arg) {
     client_info* client = (client_info*)arg;
