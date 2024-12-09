@@ -92,7 +92,7 @@ char* generate_jwt_token(char* username) {
     return token;
 }
 
-char* register_user(User user) {
+char* register_user(UserDB user) {
     // Kullanıcının zaten kayıtlı olup olmadığını kontrol et
     for (int i = 0; i < user_count; i++) {
         if (strcmp(users[i].username, user.username) == 0) {
@@ -112,7 +112,7 @@ char* register_user(User user) {
     return "Register successful!";
 }
 
-char* login_user(User user) {
+char* login_user(UserDB user) {
     char hashed_password[65];
     hash_password(user.password, hashed_password);
     // Kullanıcıyı doğrula

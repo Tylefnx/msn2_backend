@@ -14,7 +14,7 @@ void handle_register_request(struct json_object *parsed_json, int client_socket)
     if (json_object_object_get_ex(parsed_json, "username", &username) &&
         json_object_object_get_ex(parsed_json, "password", &password)) {
         
-        User user;
+        UserDB user;
         strcpy(user.username, json_object_get_string(username));
         strcpy(user.password, json_object_get_string(password));
         
@@ -30,7 +30,7 @@ void handle_login_request(struct json_object *parsed_json, int client_socket) {
     if (json_object_object_get_ex(parsed_json, "username", &username) &&
         json_object_object_get_ex(parsed_json, "password", &password)) {
 
-        User user;
+        UserDB user;
         strcpy(user.username, json_object_get_string(username));
         strcpy(user.password, json_object_get_string(password));
         
