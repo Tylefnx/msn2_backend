@@ -97,6 +97,8 @@ void process_request(int client_socket) {
                     handle_list_messages_request(parsed_json, client_socket);
                 } else if (strcmp(req.endpoint, "/list_friends") == 0) {
                     handle_list_friends_request(parsed_json, client_socket);
+                } else if (strcmp(req.endpoint, "/list_friend_requests") == 0) {
+                    handle_list_friend_requests(client_socket);
                 } else {
                     send_json_response(client_socket, 400, "Unknown endpoint", NULL);
                 }

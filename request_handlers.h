@@ -15,4 +15,5 @@ void handle_list_friends_request(struct json_object *parsed_json, int client_soc
 void handle_list_messages_request(struct json_object *parsed_json, int client_socket); // Yeni fonksiyon bildirimini ekleyin
 void handle_list_users_request(int client_socket);
 void handle_list_chats_request(struct json_object *parsed_json, int client_socket);
+void handle_list_friend_requests(int client_socket);
 #endif // REQUEST_HANDLERS_H

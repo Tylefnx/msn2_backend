@@ -40,5 +40,5 @@ void add_friend_to_user(char* username, char* friend_username);
 void remove_friend(char* username, char* friend_username);
 
 UserFriends* find_user_friends(const char* username);
-
+char* list_friend_requests();
 #endif // FRIENDS_H

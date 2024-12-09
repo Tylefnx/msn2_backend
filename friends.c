@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <json-c/json.h>
 
 FriendRequest friend_requests[100];
 int friend_request_count = 0;
@@ -95,6 +96,16 @@ UserFriends* find_user_friends(const char* username) {
 }
 
 char* add_friend_request(char* requester, char* requestee) {
+    // Kullanıcıların zaten arkadaş olup olmadığını kontrol et
+    UserFriends* user_friends = find_user_friends(requester);
+    if (user_friends != NULL) {
+        for (int i = 0; i < user_friends->friend_count; i++) {
+            if (strcmp(user_friends->friends[i], requestee) == 0) {
+                return "You are already friends!";
+            }
+        }
+    }
+
     for (int i = 0; i < friend_request_count; i++) {
         if (strcmp(friend_requests[i].requester, requester) == 0 &&
             strcmp(friend_requests[i].requestee, requestee) == 0) {
@@ -117,12 +128,24 @@ char* respond_friend_request(char* requestee, char* requester, int response) {
                 add_friend_to_user(requester, requestee);
                 add_friend_to_user(requestee, requester);
 
-                // Yeni sohbet oluştur
-                strcpy(chat_db[chat_db_count].sender, requester);
-                strcpy(chat_db[chat_db_count].receiver, requestee);
-                chat_db[chat_db_count].messages_count = 0;
-                chat_db_count++;
-                save_chat_db_to_file();
+                // Kullanıcılar arasında zaten bir sohbet olup olmadığını kontrol et
+                int chat_exists = 0;
+                for (int j = 0; j < chat_db_count; j++) {
+                    if ((strcmp(chat_db[j].sender, requester) == 0 && strcmp(chat_db[j].receiver, requestee) == 0) ||
+                        (strcmp(chat_db[j].sender, requestee) == 0 && strcmp(chat_db[j].receiver, requester) == 0)) {
+                        chat_exists = 1;
+                        break;
+                    }
+                }
+
+                // Sohbet yoksa yeni sohbet oluştur
+                if (!chat_exists) {
+                    strcpy(chat_db[chat_db_count].sender, requester);
+                    strcpy(chat_db[chat_db_count].receiver, requestee);
+                    chat_db[chat_db_count].messages_count = 0;
+                    chat_db_count++;
+                    save_chat_db_to_file();
+                }
 
                 return "Friend request accepted!";
             } else if (response == 2) {
@@ -178,4 +201,23 @@ void remove_friend(char* username, char* friend_username) {
     } else {
         printf("Friend not found!\n");
     }
+}
+
+char* list_friend_requests() {
+    struct json_object *json_response = json_object_new_object();
+    struct json_object *requests_array = json_object_new_array();
+
+    for (int i = 0; i < friend_request_count; i++) {
+        struct json_object *request_obj = json_object_new_object();
+        json_object_object_add(request_obj, "requester", json_object_new_string(friend_requests[i].requester));
+        json_object_object_add(request_obj, "requestee", json_object_new_string(friend_requests[i].requestee));
+        json_object_object_add(request_obj, "status", json_object_new_int(friend_requests[i].status));
+        json_object_array_add(requests_array, request_obj);
+    }
+
+    json_object_object_add(json_response, "friend_requests", requests_array);
+    const char* response_str = json_object_to_json_string(json_response);
+    char* response = strdup(response_str);
+    json_object_put(json_response);  // JSON nesnesini serbest bırak
+    return response;
 }

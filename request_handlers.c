@@ -227,3 +227,14 @@ void handle_list_chats_request(struct json_object *parsed_json, int client_socke
         send_json_response(client_socket, 400, "Missing username", NULL);
     }
 }
+
+void handle_list_friend_requests(int client_socket) {
+    char* response_str = list_friend_requests();
+    struct json_object *json_response = json_tokener_parse(response_str);
+    const char* json_str = json_object_to_json_string(json_response);
+    char response[BUFFER_SIZE];
+    snprintf(response, sizeof(response), "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n%s\n", json_str);
+    send(client_socket, response, strlen(response), 0);
+    json_object_put(json_response);
+    free(response_str); // Serbest bırak
+}
