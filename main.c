@@ -24,7 +24,6 @@ int main() {
 
     // Kullanıcı verilerini, arkadaş listesini ve mesajları dosyadan yükle
     load_users_from_file();
-    print_users();
     load_friends_from_file();
     load_messages_from_file();
 
