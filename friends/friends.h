@@ -1,6 +1,6 @@
 #ifndef FRIENDS_H
 #define FRIENDS_H
-#include "messages.h"
+#include "../messages/messages.h"
 
 typedef struct {
     char requester[50];

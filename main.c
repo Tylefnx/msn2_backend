@@ -1,8 +1,8 @@
 #include <pthread.h>
 #include "request_handlers.h"
-#include "auth.h"
-#include "friends.h"
-#include "messages.h"
+#include "auth/auth.h"
+#include "friends/friends.h"
+#include "messages/messages.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

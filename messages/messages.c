@@ -1,5 +1,5 @@
 #include "messages.h"
-#include "friends.h"
+#include "../friends/friends.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -11,7 +11,7 @@ MessageDB messages[1000];
 int message_count = 0;
 
 void save_messages_to_file() {
-    FILE *file = fopen("messages.txt", "w");
+    FILE *file = fopen("db/messages.txt", "w");
     if (file == NULL) {
         perror("Failed to open file for saving messages");
         return;
@@ -23,7 +23,7 @@ void save_messages_to_file() {
 }
 
 void load_messages_from_file() {
-    FILE *file = fopen("messages.txt", "r");
+    FILE *file = fopen("db/messages.txt", "r");
     if (file == NULL) {
         perror("Failed to open file for loading messages");
         return;

@@ -1,5 +1,5 @@
 #include "friends.h"
-#include "messages.h"
+#include "../messages/messages.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -15,7 +15,7 @@ ChatDB chat_db[100]; // Maksimum 100 sohbet
 int chat_db_count = 0;
 
 void save_friends_to_file() {
-    FILE *file = fopen("friends.txt", "w");
+    FILE *file = fopen("db/friends.txt", "w");
     if (file == NULL) {
         perror("Failed to open file for saving friends");
         return;
@@ -31,7 +31,7 @@ void save_friends_to_file() {
 }
 
 void load_friends_from_file() {
-    FILE *file = fopen("friends.txt", "r");
+    FILE *file = fopen("db/friends.txt", "r");
     if (file == NULL) {
         perror("Failed to open file for loading friends");
         return;
@@ -51,7 +51,7 @@ void load_friends_from_file() {
 }
 
 void save_chat_db_to_file() {
-    FILE *file = fopen("chat_db.txt", "w");
+    FILE *file = fopen("db/chat_db.txt", "w");
     if (file == NULL) {
         perror("Failed to open file for saving chat database");
         return;
@@ -67,7 +67,7 @@ void save_chat_db_to_file() {
 }
 
 void load_chat_db_from_file() {
-    FILE *file = fopen("chat_db.txt", "r");
+    FILE *file = fopen("db/chat_db.txt", "r");
     if (file == NULL) {
         perror("Failed to open file for loading chat database");
         return;

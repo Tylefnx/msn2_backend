@@ -27,7 +27,7 @@ void hash_password(const char *password, char *hash) {
 
 // Kullanıcıları dosyaya kaydetme fonksiyonu
 void save_users_to_file() {
-    FILE *file = fopen("users.txt", "w"); // Dosyayı yazma modunda aç
+    FILE *file = fopen("db/users.txt", "w"); // Dosyayı yazma modunda aç
     if (file == NULL) {
         perror("Failed to open file for saving users");
         return;
@@ -48,7 +48,7 @@ void save_users_to_file() {
 
 // Dosyadan kullanıcıları yükleme fonksiyonu
 void load_users_from_file() {
-    FILE *file = fopen("users.txt", "r");
+    FILE *file = fopen("db/users.txt", "r");
     if (file == NULL) {
         perror("Failed to open file for loading users");
         return;

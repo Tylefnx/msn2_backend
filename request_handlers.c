@@ -1,6 +1,6 @@
-#include "auth.h"
-#include "friends.h"
-#include "messages.h"
+#include "auth/auth.h"
+#include "friends/friends.h"
+#include "messages/messages.h"
 #include "request_handlers.h"
 #include <json-c/json.h>
 #include <string.h>
