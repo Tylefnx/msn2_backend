@@ -29,8 +29,11 @@ void process_request(int client_socket) {
     // Veriyi ayrıştır ve işle
     if (sscanf(buffer, "POST %s HTTP/1.1", req.endpoint) == 1) {
         char *json_start = strstr(buffer, "\r\n\r\n");
+        printf("DIKKAT JSON_START: %s", json_start);
         if (json_start != NULL) {
+            printf("DIKKAT JSON_START: %s", req.data);
             strcpy(req.data, json_start + 4);  // JSON verisini kopyala
+            printf("DIKKAT R: %s", req.data);
             struct json_object *parsed_json = json_tokener_parse(req.data);
             if (!parsed_json) {
                 send_json_response(client_socket, 400, "Invalid JSON format", NULL);
